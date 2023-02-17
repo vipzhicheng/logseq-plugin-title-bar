@@ -1,6 +1,4 @@
 import "@logseq/libs";
-import { createApp } from "vue";
-import App from "./App.vue";
 import "./style.css";
 
 function createModel() {
@@ -16,39 +14,64 @@ async function triggerBlockModal() {
 }
 
 const main = async () => {
-  logseq.App.registerUIItem("toolbar", {
-    key: "logseq-my-toy",
-    template: `
-     Hello
-    `,
+  logseq.provideModel({
+    openPluginSettings() {
+      logseq.App.invokeExternalCommand("logseq.ui/toggle-settings");
+    },
   });
-
-  // createApp(App).mount('#app')
-  // logseq.provideModel(createModel())
-  // logseq.Editor.registerSlashCommand('Test', triggerBlockModal)
-  // logseq.Editor.registerBlockContextMenuItem('Test', triggerBlockModal)
-
-  // logseq.App.registerUIItem('pagebar', {
-  //   key: 'logseq-plugin-starter-vite-tailwindcss-pagebar',
+  const config = await logseq.App.getCurrentGraph();
+  // logseq.App.registerUIItem("toolbar", {
+  //   key: "logseq-my-toy",
   //   template: `
-  //     <a data-on-click="openModal" class="button" title="Open modal" style="font-size: 18px">
-  //       P
-  //     </a>
+  //    <strong>Hello</strong>
   //   `,
   // });
 
-  // logseq.App.registerUIItem('toolbar', {
-  //   key: 'logseq-plugin-starter-vite-tailwindcss-toolbar',
-  //   template: `
-  //     <a class="button" data-on-click="openModal" title="Open modal" style="font-size: 18px">
-  //       T
-  //     </a>
-  //   `,
-  // })
+  const container = top?.document.querySelector(
+    ".cp__header>.r"
+  ) as HTMLElement;
+  const titleEl = top!.document.createElement("div");
+  titleEl.id = "logseq-title";
+  container.insertAdjacentElement("afterbegin", titleEl);
 
-  // document.addEventListener('click', (e) => {
-  //   logseq.hideMainUI();
-  // })
+  logseq.provideUI({
+    template: `${config?.name} <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
+    <i class="ti ti-settings" style=""></i>
+    </a>`,
+    path: "#logseq-title",
+    replace: true,
+    key: "logseq-my-toy",
+  });
+
+  logseq.provideStyle({
+    key: "logseq-my-toy",
+    style: `
+
+#logseq-title {
+  padding: 2rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: darkviolet;
+  flex: 1;
+}
+
+
+
+    `,
+  });
+
+  logseq.App.onCurrentGraphChanged(async () => {
+    const config = await logseq.App.getCurrentGraph();
+    logseq.provideUI({
+      template: `${config?.name} <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
+      <i class="ti ti-settings" style=""></i>
+      </a>`,
+      path: "#logseq-title",
+      // reset: true,
+      replace: true,
+      key: "logseq-my-toy",
+    });
+  });
 };
 
 logseq.ready().then(main).catch(console.error);
