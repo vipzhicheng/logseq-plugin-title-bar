@@ -1,5 +1,6 @@
 import "@logseq/libs";
 import { SettingSchemaDesc } from "@logseq/libs/dist/LSPlugin";
+import dayjs from "dayjs";
 import "./style.css";
 
 function createModel() {
@@ -30,9 +31,21 @@ logseq.useSettingsSchema(defineSettings);
 const setTitle = async () => {
   const config = await logseq.App.getCurrentGraph();
   logseq.provideUI({
-    template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${config?.name}</a> <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
-    <i class="ti ti-settings" style=""></i>
-    </a>`,
+    template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${config?.name}</a>
+    <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
+      <i class="ti ti-settings" style=""></i>
+    </a>
+    <a class="cursor-pointer" data-on-click="focusMainContent" style="display: inline-block;" title="Focus">
+      <i class="ti ti-viewfinder" style=""></i>
+    </a>
+    <a class="cursor-pointer" data-on-click="showAllSidebars" style="display: inline-block;" title="Show all sidebars">
+      <i class="ti ti-layout-distribute-vertical" style=""></i>
+    </a>
+    <a class="cursor-pointer" data-on-click="goToday" style="display: inline-block;" title="Go Today">
+      <i class="ti ti-calendar" style=""></i>
+    </a>
+
+  `,
     path: "#logseq-title",
     // reset: true,
     replace: true,
@@ -42,7 +55,6 @@ const setTitle = async () => {
   logseq.provideStyle({
     key: "logseq-my-toy-title",
     style: `
-
 #logseq-title {
   padding: 2rem;
   font-size: 1rem;
@@ -53,17 +65,43 @@ const setTitle = async () => {
 #logseq-title a {
   color: ${logseq.settings?.titleColor || "#ff0000"};
 }
+
+#my-toy--logseq-my-toy a {
+  cursor: pointer !important;
+}
     `,
   });
 };
 
 const main = async () => {
   logseq.provideModel({
-    openPluginSettings() {
-      logseq.App.invokeExternalCommand("logseq.ui/toggle-settings");
+    async openPluginSettings() {
+      await logseq.App.invokeExternalCommand("logseq.ui/toggle-settings");
     },
     openMyToySettings() {
       logseq.showSettingsUI();
+    },
+    async focusMainContent() {
+      logseq.App.setLeftSidebarVisible(false);
+      logseq.App.setRightSidebarVisible(false);
+    },
+    async showAllSidebars() {
+      logseq.App.setLeftSidebarVisible(true);
+      logseq.App.setRightSidebarVisible(true);
+    },
+    async goToday() {
+      const config = await logseq.App.getUserConfigs();
+      const format = config.preferredDateFormat
+        .replace("yyyy", "YYYY")
+        .replace("dd", "DD")
+        .replace("do", "Do")
+        .replace("EEEE", "dddd")
+        .replace("EEE", "ddd")
+        .replace("EE", "dd")
+        .replace("E", "ddd");
+
+      const pageName = dayjs(new Date()).format(format);
+      logseq.App.pushState("page", { name: pageName });
     },
   });
 
