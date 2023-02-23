@@ -44,6 +44,12 @@ const setTitle = async () => {
     <a class="cursor-pointer" data-on-click="goToday" style="display: inline-block;" title="Go Today">
       <i class="ti ti-calendar" style=""></i>
     </a>
+    <a class="cursor-pointer" data-on-click="resetSidebarTempPage" style="display: inline-block;" title="Go Today">
+      <i class="ti ti-recycle" style=""></i>
+    </a>
+    <a class="cursor-pointer" data-on-click="debug" style="display: inline-block;" title="Go Today">
+    <i class="ti ti-flask" style=""></i>
+  </a>
 
   `,
     path: "#logseq-title",
@@ -75,6 +81,32 @@ const setTitle = async () => {
 
 const main = async () => {
   logseq.provideModel({
+    async debug() {},
+    async resetSidebarTempPage() {
+      const tempPageName = "Temp Page";
+      const page = await logseq.Editor.getPage(tempPageName);
+      if (page) {
+        await logseq.Editor.deletePage(tempPageName);
+      }
+
+      await logseq.Editor.createPage(
+        tempPageName,
+        {},
+        {
+          createFirstBlock: true,
+          redirect: false,
+        }
+      );
+
+      const newPage = await logseq.Editor.getPage(tempPageName);
+      if (newPage) {
+        await logseq.Editor.openInRightSidebar(newPage.uuid);
+        setTimeout(async () => {
+          const blocks = await logseq.Editor.getPageBlocksTree(tempPageName);
+          await logseq.Editor.editBlock(blocks[0].uuid);
+        }, 300);
+      }
+    },
     async openPluginSettings() {
       await logseq.App.invokeExternalCommand("logseq.ui/toggle-settings");
     },
