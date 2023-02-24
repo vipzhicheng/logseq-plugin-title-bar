@@ -31,7 +31,9 @@ logseq.useSettingsSchema(defineSettings);
 const setTitle = async () => {
   const config = await logseq.App.getCurrentGraph();
   logseq.provideUI({
-    template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${config?.name}</a>
+    template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${
+      config?.name
+    }</a>
     <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
       <i class="ti ti-settings" style=""></i>
     </a>
@@ -47,8 +49,8 @@ const setTitle = async () => {
     <a class="cursor-pointer" data-on-click="resetSidebarTempPage" style="display: inline-block;" title="Go Today">
       <i class="ti ti-recycle" style=""></i>
     </a>
-    <a class="cursor-pointer" data-on-click="debug" style="display: inline-block;" title="Go Today">
-    <i class="ti ti-flask" style=""></i>
+    <a class="cursor-pointer" data-on-click="readonly" style="display: inline-block;" title="Go Today">
+    <i class="ti ti-${logseq.settings?.readonly ? "edit" : "eye"}" style=""></i>
   </a>
 
   `,
@@ -80,8 +82,25 @@ const setTitle = async () => {
 };
 
 const main = async () => {
+  top?.document.getElementById("root")?.addEventListener("mousedown", (e) => {
+    if (logseq.settings?.readonly) {
+      setTimeout(async () => {
+        await logseq.Editor.exitEditingMode(false);
+      }, 100);
+    }
+  });
   logseq.provideModel({
-    async debug() {},
+    async readonly() {
+      const settings: any = logseq.settings;
+      if (!settings?.readonly) {
+        settings.readonly = 1;
+        logseq.updateSettings(settings);
+      } else {
+        settings.readonly = 0;
+        logseq.updateSettings(settings);
+      }
+      await setTitle();
+    },
     async resetSidebarTempPage() {
       const tempPageName = "Temp Page";
       const page = await logseq.Editor.getPage(tempPageName);
