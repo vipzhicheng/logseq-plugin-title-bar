@@ -142,6 +142,9 @@ const main = async () => {
     },
     async goToday() {
       const config = await logseq.App.getUserConfigs();
+      if (!config.enabledJournals) {
+        logseq.UI.showMsg("Journal feature not enabled", "error");
+      }
       const format = config.preferredDateFormat
         .replace("yyyy", "YYYY")
         .replace("dd", "DD")
