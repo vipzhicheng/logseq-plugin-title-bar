@@ -15,6 +15,60 @@ async function triggerBlockModal() {
   createModel().openModal();
 }
 
+const EVENTS_TO_PREVENT = [
+  "mousedown",
+  "mousemove",
+  "mouseup",
+  "click",
+  "keydown",
+];
+
+const KEYS_TO_PREVENT = new Set([
+  "Enter",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "Backspace",
+]);
+
+function preventEditing(e: any) {
+  // keydown
+  if (e.type === "keydown") {
+    if (KEYS_TO_PREVENT.has(e.key)) {
+      e.stopPropagation();
+    }
+    return;
+  }
+
+  // mouse and click
+  const path = e.composedPath();
+
+  // Let go of any links.
+  if (path[0]?.tagName.toLowerCase() === "a") return;
+
+  for (let i = 0; i < path.length; i++) {
+    // Let go of block refs.
+    if (path[i].classList?.contains("block-ref")) return;
+    // Let go of tocgen links.
+    if (path[i].classList?.contains("kef-tocgen-page")) return;
+    if (path[i].classList?.contains("kef-tocgen-block")) return;
+    // Let go of CodeMirror code blocks.
+    if (path[i].classList?.contains("CodeMirror")) return;
+    // Let go of favorite items and recent items.
+    if (path[i].classList?.contains("favorite-item")) return;
+    if (path[i].classList?.contains("recent-item")) return;
+    if (path[i].classList?.contains("ls-icon-maximize")) return;
+
+    if (path[i].id === "left-container") {
+      if (path[i - 1]?.id === "main-container") {
+        e.stopPropagation();
+      }
+      return;
+    }
+  }
+}
+
 const defineSettings: SettingSchemaDesc[] = [
   {
     key: "titleColor",
@@ -46,10 +100,10 @@ const setTitle = async () => {
     <a class="cursor-pointer" data-on-click="goToday" style="display: inline-block;" title="Go Today">
       <i class="ti ti-calendar" style=""></i>
     </a>
-    <a class="cursor-pointer" data-on-click="resetSidebarTempPage" style="display: inline-block;" title="Go Today">
+    <a class="cursor-pointer" data-on-click="resetSidebarTempPage" style="display: inline-block;" title="Reset Temp Page">
       <i class="ti ti-recycle" style=""></i>
     </a>
-    <a class="cursor-pointer" data-on-click="readonly" style="display: inline-block;" title="Go Today">
+    <a class="cursor-pointer" data-on-click="readonly" style="display: inline-block;" title="Readonly">
     <i class="ti ti-${logseq.settings?.readonly ? "edit" : "eye"}" style=""></i>
   </a>
 
@@ -81,14 +135,39 @@ const setTitle = async () => {
   });
 };
 
-const main = async () => {
-  top?.document.getElementById("root")?.addEventListener("mousedown", (e) => {
-    if (logseq.settings?.readonly) {
-      setTimeout(async () => {
-        await logseq.Editor.exitEditingMode(false);
-      }, 100);
+const checkReadonly = async () => {
+  const appContainer = parent.document.getElementById("app-container");
+  if (appContainer) {
+    if (!logseq.settings?.readonly) {
+      for (const event of EVENTS_TO_PREVENT) {
+        parent.document.documentElement.removeEventListener(
+          event,
+          preventEditing,
+          {
+            capture: true,
+          }
+        );
+      }
+      parent.document.body.style.height = "";
+    } else {
+      await logseq.Editor.exitEditingMode();
+      parent.document.body.style.height = "auto";
+      for (const event of EVENTS_TO_PREVENT) {
+        parent.document.documentElement.addEventListener(
+          event,
+          preventEditing,
+          {
+            capture: true,
+            passive: true,
+          }
+        );
+      }
     }
-  });
+  }
+};
+
+const main = async () => {
+  await checkReadonly();
   logseq.provideModel({
     async readonly() {
       const settings: any = logseq.settings;
@@ -99,31 +178,38 @@ const main = async () => {
         settings.readonly = 0;
         logseq.updateSettings(settings);
       }
+      await checkReadonly();
       await setTitle();
     },
     async resetSidebarTempPage() {
       const tempPageName = "Temp Page";
-      const page = await logseq.Editor.getPage(tempPageName);
-      if (page) {
-        await logseq.Editor.deletePage(tempPageName);
-      }
-
-      await logseq.Editor.createPage(
-        tempPageName,
-        {},
-        {
-          createFirstBlock: true,
-          redirect: false,
+      const currentPage = await logseq.Editor.getCurrentPage();
+      if (currentPage) {
+        const tempPage = await logseq.Editor.getPage(tempPageName);
+        if (tempPage) {
+          await logseq.Editor.deletePage(tempPageName);
         }
-      );
 
-      const newPage = await logseq.Editor.getPage(tempPageName);
-      if (newPage) {
-        await logseq.Editor.openInRightSidebar(newPage.uuid);
-        setTimeout(async () => {
-          const blocks = await logseq.Editor.getPageBlocksTree(tempPageName);
-          await logseq.Editor.editBlock(blocks[0].uuid);
-        }, 300);
+        await logseq.Editor.createPage(
+          tempPageName,
+          {},
+          {
+            createFirstBlock: true,
+            redirect: false,
+          }
+        );
+
+        const newPage = await logseq.Editor.getPage(tempPageName);
+        if (newPage) {
+          await logseq.App.pushState("page", {
+            name: currentPage.name,
+          });
+          await logseq.Editor.openInRightSidebar(newPage.uuid);
+          setTimeout(async () => {
+            const blocks = await logseq.Editor.getPageBlocksTree(tempPageName);
+            await logseq.Editor.editBlock(blocks[0].uuid);
+          }, 300);
+        }
       }
     },
     async openPluginSettings() {
@@ -175,6 +261,19 @@ const main = async () => {
   logseq.onSettingsChanged(async () => {
     await setTitle();
   });
+
+  // logseq.beforeunload(async () => {
+  //   for (const event of EVENTS_TO_PREVENT) {
+  //     parent.document.documentElement.removeEventListener(
+  //       event,
+  //       preventEditing,
+  //       {
+  //         capture: true,
+  //       }
+  //     );
+  //   }
+  //   parent.document.body.style.height = "";
+  // });
 };
 
 logseq.ready().then(main).catch(console.error);
