@@ -88,8 +88,11 @@ const setTitle = async () => {
     template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${
       config?.name
     }</a>
-    <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Plugin Settings">
+    <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Settings">
       <i class="ti ti-settings" style=""></i>
+    </a>
+    <a class="cursor-pointer" data-on-click="openMarketplace" style="display: inline-block;" title="Marketplace">
+      <i class="ti ti-puzzle-2" style=""></i>
     </a>
     <a class="cursor-pointer" data-on-click="focusMainContent" style="display: inline-block;" title="Focus">
       <i class="ti ti-viewfinder" style=""></i>
@@ -169,6 +172,9 @@ const checkReadonly = async () => {
 const main = async () => {
   await checkReadonly();
   logseq.provideModel({
+    async openMarketplace() {
+      await logseq.App.invokeExternalCommand("logseq.ui/goto-plugins");
+    },
     async readonly() {
       const settings: any = logseq.settings;
       if (!settings?.readonly) {
