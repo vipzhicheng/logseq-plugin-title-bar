@@ -76,7 +76,97 @@ const defineSettings: SettingSchemaDesc[] = [
     description: "Set title color",
     type: "string",
     inputAs: "color",
-    default: "#ff0000",
+    default: "#cd18ac",
+  },
+
+  {
+    key: "tempPageName",
+    title: "Temp Page Name",
+    description: "Set temp page name",
+    type: "string",
+    default: "Temp Page",
+  },
+
+  {
+    key: "defaultTitleAction",
+    title: "Default Title Action",
+    description: "Set default title action",
+    type: "enum",
+    enumChoices: [
+      "openTitleBarSettings",
+      "openPluginSettings",
+      "openMarketplace",
+      "focusMainContent",
+      "showAllSidebars",
+      "goToday",
+      "goSidebarTempPage",
+      "toggleReadonly",
+    ],
+    enumPicker: "select",
+    default: "openTitleBarSettings",
+  },
+  // @ts-ignore
+  {
+    key: "action_switches",
+    title: "Action Switches",
+    type: "heading",
+  },
+
+  {
+    key: "openTitleBarSettings",
+    title: "",
+    description: "Toggle openTitleBarSettings",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "openPluginSettings",
+    title: "",
+    description: "Toggle openPluginSettings",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "openMarketplace",
+    title: "",
+    description: "Toggle openMarketplace",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "focusMainContent",
+    title: "",
+    description: "Toggle focusMainContent, hide all sidebars",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "showAllSidebars",
+    title: "",
+    description: "Toggle showAllSidebars",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "goToday",
+    title: "",
+    description: "Toggle goToday",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "goSidebarTempPage",
+    title: "",
+    description: "Toggle goSidebarTempPage",
+    type: "boolean",
+    default: true,
+  },
+  {
+    key: "toggleReadonly",
+    title: "",
+    description: "Toggle toggleReadonly",
+    type: "boolean",
+    default: true,
   },
 ];
 
@@ -84,41 +174,78 @@ logseq.useSettingsSchema(defineSettings);
 
 const setTitle = async () => {
   const config = await logseq.App.getCurrentGraph();
-  logseq.provideUI({
-    template: `<a data-on-click="openMyToySettings" title="My Toy Settings">${
-      config?.name
-    }</a>
-    <a class="cursor-pointer" data-on-click="openPluginSettings" style="display: inline-block;" title="Settings">
-      <i class="ti ti-settings" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="openMarketplace" style="display: inline-block;" title="Marketplace">
-      <i class="ti ti-puzzle-2" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="focusMainContent" style="display: inline-block;" title="Focus">
-      <i class="ti ti-viewfinder" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="showAllSidebars" style="display: inline-block;" title="Show all sidebars">
-      <i class="ti ti-layout-distribute-vertical" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="goToday" style="display: inline-block;" title="Go Today">
-      <i class="ti ti-calendar" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="resetSidebarTempPage" style="display: inline-block;" title="Reset Temp Page">
-      <i class="ti ti-recycle" style=""></i>
-    </a>
-    <a class="cursor-pointer" data-on-click="readonly" style="display: inline-block;" title="Readonly">
-    <i class="ti ti-${logseq.settings?.readonly ? "edit" : "eye"}" style=""></i>
-  </a>
+  const titleBarArray = [
+    `<a data-on-click="defaultTitleAction" title="${config?.name}">${config?.name}</a>`,
+  ];
+  if (logseq.settings?.openTitleBarSettings) {
+    titleBarArray.push(
+      `<a data-on-click="openTitleBarSettings" title="Title Bar Settings">
+      <i class="ti ti-adjustments-horizontal" style=""></i>
+    </a>`
+    );
+  }
+  if (logseq.settings?.openPluginSettings) {
+    titleBarArray.push(
+      `<a data-on-click="openPluginSettings" style="display: inline-block;" title="Settings">
+        <i class="ti ti-settings" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.openMarketplace) {
+    titleBarArray.push(
+      `<a data-on-click="openMarketplace" style="display: inline-block;" title="Marketplace">
+        <i class="ti ti-puzzle-2" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.focusMainContent) {
+    titleBarArray.push(
+      `<a data-on-click="focusMainContent" style="display: inline-block;" title="Focus">
+        <i class="ti ti-viewfinder" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.showAllSidebars) {
+    titleBarArray.push(
+      `<a data-on-click="showAllSidebars" style="display: inline-block;" title="Show all sidebars">
+        <i class="ti ti-layout-distribute-vertical" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.goToday) {
+    titleBarArray.push(
+      `<a data-on-click="goToday" style="display: inline-block;" title="Go Today">
+        <i class="ti ti-calendar" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.goSidebarTempPage) {
+    titleBarArray.push(
+      `<a data-on-click="goSidebarTempPage" style="display: inline-block;" title="Go Temp Page">
+        <i class="ti ti-recycle" style=""></i>
+      </a>`
+    );
+  }
+  if (logseq.settings?.toggleReadonly) {
+    titleBarArray.push(
+      `<a data-on-click="toggleReadonly" style="display: inline-block;" title="Readonly Mode">
+        <i class="ti ti-${
+          logseq.settings?.readonly ? "edit" : "eye"
+        }" style=""></i>
+      </a>`
+    );
+  }
 
-  `,
+  logseq.provideUI({
+    template: titleBarArray.join("\n"),
     path: "#logseq-title",
     // reset: true,
     replace: true,
-    key: "logseq-my-toy",
+    key: "logseq-title-bar",
   });
 
   logseq.provideStyle({
-    key: "logseq-my-toy-title",
+    key: "logseq-title-bar-title",
     style: `
 #logseq-title {
   padding: 2rem;
@@ -131,7 +258,7 @@ const setTitle = async () => {
   color: ${logseq.settings?.titleColor || "#ff0000"};
 }
 
-#my-toy--logseq-my-toy a {
+#title-bar--logseq-title-bar a {
   cursor: pointer !important;
 }
     `,
@@ -171,11 +298,11 @@ const checkReadonly = async () => {
 
 const main = async () => {
   await checkReadonly();
-  logseq.provideModel({
+  const actionModels: any = {
     async openMarketplace() {
       await logseq.App.invokeExternalCommand("logseq.ui/goto-plugins");
     },
-    async readonly() {
+    async toggleReadonly() {
       const settings: any = logseq.settings;
       if (!settings?.readonly) {
         settings.readonly = 1;
@@ -187,15 +314,10 @@ const main = async () => {
       await checkReadonly();
       await setTitle();
     },
-    async resetSidebarTempPage() {
-      const tempPageName = "Temp Page";
-      const currentPage = await logseq.Editor.getCurrentPage();
-      if (currentPage) {
-        const tempPage = await logseq.Editor.getPage(tempPageName);
-        if (tempPage) {
-          await logseq.Editor.deletePage(tempPageName);
-        }
-
+    async goSidebarTempPage() {
+      const tempPageName = logseq.settings?.tempPageName || "Temp Page";
+      const tempPage = await logseq.Editor.getPage(tempPageName);
+      if (!tempPage) {
         await logseq.Editor.createPage(
           tempPageName,
           {},
@@ -204,24 +326,21 @@ const main = async () => {
             redirect: false,
           }
         );
+      }
 
-        const newPage = await logseq.Editor.getPage(tempPageName);
-        if (newPage) {
-          await logseq.App.pushState("page", {
-            name: currentPage.name,
-          });
-          await logseq.Editor.openInRightSidebar(newPage.uuid);
-          setTimeout(async () => {
-            const blocks = await logseq.Editor.getPageBlocksTree(tempPageName);
-            await logseq.Editor.editBlock(blocks[0].uuid);
-          }, 300);
-        }
+      const newPage = await logseq.Editor.getPage(tempPageName);
+      if (newPage) {
+        await logseq.Editor.openInRightSidebar(newPage.uuid);
+        setTimeout(async () => {
+          const blocks = await logseq.Editor.getPageBlocksTree(tempPageName);
+          await logseq.Editor.editBlock(blocks[0].uuid);
+        }, 300);
       }
     },
     async openPluginSettings() {
       await logseq.App.invokeExternalCommand("logseq.ui/toggle-settings");
     },
-    openMyToySettings() {
+    openTitleBarSettings() {
       logseq.showSettingsUI();
     },
     async focusMainContent() {
@@ -249,7 +368,21 @@ const main = async () => {
       const pageName = dayjs(new Date()).format(format);
       logseq.App.pushState("page", { name: pageName });
     },
-  });
+  };
+
+  actionModels.defaultTitleAction = async () => {
+    const settings: any = logseq.settings;
+    settings.defaultTitleAction =
+      settings?.defaultTitleAction || "openPluginSettings";
+    if (
+      settings?.defaultTitleAction &&
+      actionModels[settings?.defaultTitleAction]
+    ) {
+      actionModels[settings?.defaultTitleAction]();
+    }
+  };
+
+  logseq.provideModel(actionModels);
 
   const container = top?.document.querySelector(
     ".cp__header>.r"
@@ -267,19 +400,6 @@ const main = async () => {
   logseq.onSettingsChanged(async () => {
     await setTitle();
   });
-
-  // logseq.beforeunload(async () => {
-  //   for (const event of EVENTS_TO_PREVENT) {
-  //     parent.document.documentElement.removeEventListener(
-  //       event,
-  //       preventEditing,
-  //       {
-  //         capture: true,
-  //       }
-  //     );
-  //   }
-  //   parent.document.body.style.height = "";
-  // });
 };
 
 logseq.ready().then(main).catch(console.error);

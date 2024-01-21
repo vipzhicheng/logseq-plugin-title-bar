@@ -1,7 +1,7 @@
 {
-  "name": "logseq-plugin-my-toy",
+  "name": "logseq-plugin-title-bar",
   "version": "0.0.1",
-  "description": "my playground, will not publish to marketplace",
+  "description": "Show graph title and some quick actions in the title bar",
   "main": "index.html",
   "scripts": {
     "dev": "vite dev",
@@ -25,8 +25,8 @@
     "vue": "^3.2.47"
   },
   "logseq": {
-    "id": "my-toy",
-    "title": "My Toy",
+    "id": "title-bar",
+    "title": "Title Bar",
     "icon": "./icon.png"
   }
 }
