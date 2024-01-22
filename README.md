@@ -4,6 +4,8 @@
 
 Show graph title and some quick actions in the title bar.
 
+![screencast](./screencast.gif)[]
+
 ## Main features
 
 - Show graph title in the title bar, title bar is on the left top of the Logseq main area.
