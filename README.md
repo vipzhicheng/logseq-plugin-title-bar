@@ -4,7 +4,7 @@
 
 Show graph title and some quick actions in the title bar.
 
-![screencast](./screencast.gif)[]
+![screencast](./screencast.gif)
 
 ## Main features
 
