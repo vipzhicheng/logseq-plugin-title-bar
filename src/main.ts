@@ -168,6 +168,14 @@ const defineSettings: SettingSchemaDesc[] = [
     type: "boolean",
     default: true,
   },
+
+  {
+    key: "toggleForPrint",
+    title: "",
+    description: "Toggle for print",
+    type: "boolean",
+    default: true,
+  },
 ];
 
 logseq.useSettingsSchema(defineSettings);
@@ -236,6 +244,18 @@ const setTitle = async () => {
     );
   }
 
+  if (logseq.settings?.toggleForPrint) {
+    const currentPage = await logseq.Editor.getCurrentPage();
+    let iconTitle = "Toggle for print";
+    titleBarArray.push(
+      `<a data-on-click="toggleForPrint" style="display: inline-block;" title="${iconTitle}">
+        <i class="ti ti-${
+          !logseq.settings?.onlyShowContent ? "wash-tumble-dry" : "wash-tumble-off"
+        }" style=""></i>
+      </a>`
+    );
+  }
+
   logseq.provideUI({
     template: titleBarArray.join("\n"),
     path: "#logseq-title",
@@ -263,6 +283,54 @@ const setTitle = async () => {
 }
     `,
   });
+};
+
+const checkReferences = async (delay = false) => {
+  const currentPage = await logseq.Editor.getCurrentPage();
+  if (currentPage) {
+    const handleReferences = () => {
+      const pageEls = parent.document.querySelectorAll("#main-content-container .references, #main-content-container .page-hierarchy");
+
+      for (let pageEl of pageEls) {
+
+        if (pageEl) {
+          if (logseq.settings?.onlyShowContent) {
+            (pageEl as HTMLElement).style.display = "none";
+          } else {
+            (pageEl as HTMLElement).style.display = "";
+          }
+        }
+      }
+    };
+
+    if (delay) {
+      setTimeout(handleReferences, 3000);
+    } else {
+      handleReferences();
+    }
+  }
+};
+
+const checkPageTitle = async (delay = false) => {
+  const currentPage = await logseq.Editor.getCurrentPage();
+  if (currentPage) {
+    const handlePageTitle = () => {
+      const pageEl = parent.document.querySelector(".ls-page-title");
+      if (pageEl && pageEl.parentElement) {
+        if (logseq.settings?.onlyShowContent) {
+          pageEl.parentElement.style.display = "none";
+        } else {
+          pageEl.parentElement.style.display = "";
+        }
+      }
+    };
+
+    if (delay) {
+      setTimeout(handlePageTitle, 300);
+    } else {
+      handlePageTitle();
+    }
+  }
 };
 
 const checkReadonly = async () => {
@@ -298,6 +366,8 @@ const checkReadonly = async () => {
 
 const main = async () => {
   await checkReadonly();
+  await checkPageTitle(true);
+  await checkReferences(true);
   const actionModels: any = {
     async openMarketplace() {
       await logseq.App.invokeExternalCommand("logseq.ui/goto-plugins");
@@ -313,6 +383,18 @@ const main = async () => {
       }
       await checkReadonly();
       await setTitle();
+    },
+    async toggleForPrint() {
+      const settings: any = logseq.settings;
+      if (!settings?.onlyShowContent) {
+        settings.onlyShowContent = 1;
+        logseq.updateSettings(settings);
+      } else {
+        settings.onlyShowContent = 0;
+        logseq.updateSettings(settings);
+      }
+      await checkPageTitle();
+      await checkReferences();
     },
     async goSidebarTempPage() {
       const tempPageName = logseq.settings?.tempPageName || "Temp Page";
@@ -395,6 +477,14 @@ const main = async () => {
 
   logseq.App.onCurrentGraphChanged(async () => {
     await setTitle();
+    await checkPageTitle(true);
+    await checkReferences(true)
+  });
+
+  logseq.App.onRouteChanged(async () => {
+    await setTitle();
+    await checkPageTitle(true);
+    await checkReferences(true)
   });
 
   logseq.onSettingsChanged(async () => {
